@@ -311,6 +311,24 @@ def ls_in_hdfs(path='.', recursive=False):
 
 
 
+# path가 파일이든, 디렉토리든 무조건 삭제하는 함수
+# verbose=Trued이면, 로그를 프린트하지만, 지워지는 팡리이 없을 경우에는 프린트 안함
+def delete_file_or_dir(path, verbose=False):
+    type_str = 'directory'
+
+    try:
+        rmtree(path) # First, try deleting a directory
+    except:          # However, 'path' is not a directory
+        try:
+            remove_(path)
+            type_str = 'file'
+        except:
+            verbose = False
+    if verbose:
+        print('Deleted %s %s from %s' %(type_str, path, getcwd_()))
+
+
+
 
 
 # 현 Spark 환경에서 Total Executor Core의 갯수를 return
@@ -468,9 +486,10 @@ def _get_cast_expr(pyspark_df, convert_decimal, cast_dict,
     return [] if num_cast == 0 else cast_str_list
 
 
-
-
-
+# 아래 df_as_pandas_with_pyspark 함수를 이용하여 SQL 실행 결과를 pd.DataFrame으로 받아오는 함수
+# hive_context=None일 경우, 알아서 Pyspark을 연결하여 데이터 받아옴 (편의성 극대화)
+# kwargsms Parquet Engine에 넘기는 매개변수를 의미함
+# (PyArrow API문서의 pyarrow.parquet.read_table 함수 참조)
 def sql_as_pandas_with_pyspark(sql, hive_context=None,
                                convert_decimal=True, cast_dict=None,
                                delete_temp_hdfs=True, delete_temp_local=True,
@@ -519,3 +538,5 @@ def sql_as_pandas_with_pyspark(sql, hive_context=None,
                                      *positional_args, **kwargs)
            for ql in sql]
     return res[0] if len(res) == 1 else res
+
+
